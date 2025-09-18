@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cam - Mental Health Support Chatbot</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+</head>
+<body>
+    <div class="container">
+        <div class="header cam-header">
+            <div class="back-button">
+                <a href="{{ url_for('dashboard') }}">
+                    <i class="fas fa-arrow-left"></i>
+                </a>
+            </div>
+            <h1>Emotion Detection</h1>
+            <div class="nav-actions">
+                <a href="{{ url_for('dashboard') }}" class="btn btn-nav">
+                    <i class="fas fa-home"></i>
+                </a>
+                <a href="{{ url_for('community') }}" class="btn btn-nav">
+                    <i class="fas fa-users"></i>
+                </a>
+                <a href="{{ url_for('profile') }}" class="btn btn-nav">
+                    <i class="fas fa-user"></i>
+                </a>
+                <a href="{{ url_for('logout') }}" class="btn btn-logout">
+                    <i class="fas fa-sign-out-alt"></i>
+                </a>
+            </div>
+        </div>
+        <div class="main cam-main">
+            <div class="cam-container">
+                <div class="video-container">
+                    <video id="video" autoplay></video>
+                    <canvas id="canvas" style="display:none;"></canvas>
+                </div>
+                <div class="cam-controls">
+                    <button id="startButton" class="btn btn-primary">
+                        <i class="fas fa-play"></i> Start Camera
+                    </button>
+                    <button id="captureButton" class="btn btn-secondary" disabled>
+                        <i class="fas fa-camera"></i> Detect Emotion
+                    </button>
+                </div>
+                <div class="result-container" id="resultContainer" style="display: none;">
+                    <div class="detected-emotion">
+                        <h2>Detected Emotion: <span id="emotionResult">-</span></h2>
+                    </div>
+                    <div class="therapy-suggestions">
+                        <h3>Therapy Suggestions:</h3>
+                        <ul id="therapySuggestions"></ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="footer">
+            <p>&copy; 2025 Mental Health Support Chatbot. All rights reserved.</p>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const video = document.getElementById('video');
+            const canvas = document.getElementById('canvas');
+            const startButton = document.getElementById('startButton');
+            const captureButton = document.getElementById('captureButton');
+            const resultContainer = document.getElementById('resultContainer');
+            const emotionResult = document.getElementById('emotionResult');
+            const therapySuggestions = document.getElementById('therapySuggestions');
+            
+            let stream = null;
+            
+            // Start camera function
+            async function startCamera() {
+                try {
+                    stream = await navigator.mediaDevices.getUserMedia({
+                        video: true,
+                        audio: false
+                    });
+                    
+                    video.srcObject = stream;
+                    startButton.disabled = true;
+                    captureButton.disabled = false;
+                    startButton.innerHTML = '<i class="fas fa-video"></i> Camera Active';
+                } catch (err) {
+                    console.error('Error accessing camera:', err);
+                    alert('Could not access camera. Please make sure you have granted permission.');
+                }
+            }
+            
+            // Capture image and detect emotion
+            async function captureAndDetect() {
+                // Display canvas with same dimensions as video
+                canvas.width = video.videoWidth;
+                canvas.height = video.videoHeight;
+                
+                // Draw current video frame on canvas
+                const ctx = canvas.getContext('2d');
+                ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+                
+                // Get image data as base64
+                const imageData = canvas.toDataURL('image/jpeg');
+                
+                // Show loading state
+                captureButton.disabled = true;
+                captureButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Processing...';
+                resultContainer.style.display = 'none';
+                
+                try {
+                    // Send to backend for processing
+                    const response = await fetch('/process_emotion', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({ image: imageData }),
+                    });
+                    
+                    const data = await response.json();
+                    
+                    // Display results
+                    emotionResult.textContent = data.emotion;
+                    
+                    // Clear previous suggestions
+                    therapySuggestions.innerHTML = '';
+                    
+                    // Add therapy suggestions
+                    data.therapy.forEach(suggestion => {
+                        const li = document.createElement('li');
+                        li.textContent = suggestion;
+                        therapySuggestions.appendChild(li);
+                    });
+                    
+                    // Show results
+                    resultContainer.style.display = 'block';
+                } catch (error) {
+                    console.error('Error:', error);
+                    alert('Error processing image. Please try again.');
+                } finally {
+                    // Reset button state
+                    captureButton.disabled = false;
+                    captureButton.innerHTML = '<i class="fas fa-camera"></i> Detect Emotion';
+                }
+            }
+            
+            // Event listeners
+            startButton.addEventListener('click', startCamera);
+            captureButton.addEventListener('click', captureAndDetect);
+            
+            // Clean up on page unload
+            window.addEventListener('beforeunload', function() {
+                if (stream) {
+                    stream.getTracks().forEach(track => track.stop());
+                }
+            });
+        });
+    </script>
+</body>
+</html>

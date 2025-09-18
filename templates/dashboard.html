@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard - Mental Health Support Chatbot</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+</head>
+<body>
+    <div class="container">
+        <div class="header dashboard-header">
+            <div class="user-info">
+                <i class="fas fa-user-circle"></i>
+                <span>Welcome, {{ name }}</span>
+            </div>
+            <div class="nav-actions">
+                <a href="{{ url_for('profile') }}" class="btn btn-profile">
+                    <i class="fas fa-user"></i> Profile
+                </a>
+                <a href="{{ url_for('logout') }}" class="btn btn-logout">
+                    <i class="fas fa-sign-out-alt"></i> Logout
+                </a>
+            </div>
+        </div>
+        <div class="main dashboard-main">
+            <h1>How would you like to get support today?</h1>
+            <div class="dashboard-options">
+                <a href="{{ url_for('chat') }}" class="option-card">
+                    <div class="option-icon">
+                        <i class="fas fa-comments"></i>
+                    </div>
+                    <h2>Chat</h2>
+                    <p>Express your feelings through text</p>
+                </a>
+                <a href="{{ url_for('cam') }}" class="option-card">
+                    <div class="option-icon">
+                        <i class="fas fa-camera"></i>
+                    </div>
+                    <h2>Cam</h2>
+                    <p>Detect emotions from facial expressions</p>
+                </a>
+                <a href="{{ url_for('community') }}" class="option-card">
+                    <div class="option-icon">
+                        <i class="fas fa-users"></i>
+                    </div>
+                    <h2>Community</h2>
+                    <p>Connect with others on similar journeys</p>
+                </a>
+            </div>
+        </div>
+        <div class="footer">
+            <p>&copy; 2025 Mental Health Support Chatbot. All rights reserved.</p>
+        </div>
+    </div>
+</body>
+</html>

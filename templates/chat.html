@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chat - Mental Health Support Chatbot</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+</head>
+<body>
+    <div class="container">
+        <div class="header chat-header">
+            <div class="back-button">
+                <a href="{{ url_for('dashboard') }}">
+                    <i class="fas fa-arrow-left"></i>
+                </a>
+            </div>
+            <h1>Chat Support</h1>
+            <div class="nav-actions">
+                <a href="{{ url_for('dashboard') }}" class="btn btn-nav">
+                    <i class="fas fa-home"></i>
+                </a>
+                <a href="{{ url_for('community') }}" class="btn btn-nav">
+                    <i class="fas fa-users"></i>
+                </a>
+                <a href="{{ url_for('profile') }}" class="btn btn-nav">
+                    <i class="fas fa-user"></i>
+                </a>
+                <a href="{{ url_for('logout') }}" class="btn btn-logout">
+                    <i class="fas fa-sign-out-alt"></i>
+                </a>
+            </div>
+        </div>
+        <div class="main chat-main">
+            <div class="chat-container">
+                <div class="chat-messages" id="chatMessages">
+                    <div class="message bot">
+                        <div class="message-content">
+                            <p>Hello {{ name }}! How are you feeling today?</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="emotion-buttons">
+                    <button class="emotion-btn" data-emotion="happy">
+                        <i class="fas fa-smile"></i> Happy
+                    </button>
+                    <button class="emotion-btn" data-emotion="sad">
+                        <i class="fas fa-frown"></i> Sad
+                    </button>
+                    <button class="emotion-btn" data-emotion="angry">
+                        <i class="fas fa-angry"></i> Angry
+                    </button>
+                    <button class="emotion-btn" data-emotion="anxious">
+                        <i class="fas fa-meh"></i> Anxious
+                    </button>
+                </div>
+                <div class="chat-input">
+                    <input type="text" id="userMessage" placeholder="Type your message here...">
+                    <button id="sendMessage">
+                        <i class="fas fa-paper-plane"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+        <div class="footer">
+            <p>&copy; 2025 Mental Health Support Chatbot. All rights reserved.</p>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const chatMessages = document.getElementById('chatMessages');
+            const userMessage = document.getElementById('userMessage');
+            const sendButton = document.getElementById('sendMessage');
+            const emotionButtons = document.querySelectorAll('.emotion-btn');
+            
+            // Function to add a message to the chat
+            function addMessage(content, isUser = false) {
+                const messageDiv = document.createElement('div');
+                messageDiv.className = isUser ? 'message user' : 'message bot';
+                
+                const messageContent = document.createElement('div');
+                messageContent.className = 'message-content';
+                
+                const messagePara = document.createElement('p');
+                messagePara.textContent = content;
+                
+                messageContent.appendChild(messagePara);
+                messageDiv.appendChild(messageContent);
+                chatMessages.appendChild(messageDiv);
+                
+                // Scroll to bottom
+                chatMessages.scrollTop = chatMessages.scrollHeight;
+            }
+            
+            // Function to send message to backend
+            async function sendMessageToBackend(message, emotion = '') {
+                try {
+                    const response = await fetch('/process_chat', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({ message, emotion }),
+                    });
+                    
+                    const data = await response.json();
+                    return data.response;
+                } catch (error) {
+                    console.error('Error:', error);
+                    return "Sorry, I'm having trouble processing your request.";
+                }
+            }
+            
+            // Event listener for send button
+            sendButton.addEventListener('click', async function() {
+                const message = userMessage.value.trim();
+                if (message) {
+                    // Add user message to chat
+                    addMessage(message, true);
+                    
+                    // Clear input
+                    userMessage.value = '';
+                    
+                    // Show typing indicator
+                    const typingDiv = document.createElement('div');
+                    typingDiv.className = 'message bot typing';
+                    typingDiv.innerHTML = '<div class="message-content"><p>Typing...</p></div>';
+                    chatMessages.appendChild(typingDiv);
+                    chatMessages.scrollTop = chatMessages.scrollHeight;
+                    
+                    // Get response from backend
+                    const response = await sendMessageToBackend(message);
+                    
+                    // Remove typing indicator
+                    chatMessages.removeChild(typingDiv);
+                    
+                    // Add bot response
+                    addMessage(response);
+                }
+            });
+            
+            // Event listener for Enter key
+            userMessage.addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') {
+                    sendButton.click();
+                }
+            });
+            
+            // Event listeners for emotion buttons
+            emotionButtons.forEach(button => {
+                button.addEventListener('click', async function() {
+                    const emotion = this.getAttribute('data-emotion');
+                    
+                    // Add user message to chat
+                    addMessage(`I'm feeling ${emotion}`, true);
+                    
+                    // Show typing indicator
+                    const typingDiv = document.createElement('div');
+                    typingDiv.className = 'message bot typing';
+                    typingDiv.innerHTML = '<div class="message-content"><p>Typing...</p></div>';
+                    chatMessages.appendChild(typingDiv);
+                    chatMessages.scrollTop = chatMessages.scrollHeight;
+                    
+                    // Get response from backend
+                    const response = await sendMessageToBackend('', emotion);
+                    
+                    // Remove typing indicator
+                    chatMessages.removeChild(typingDiv);
+                    
+                    // Add bot response
+                    addMessage(response);
+                });
+            });
+        });
+    </script>
+</body>
+</html>

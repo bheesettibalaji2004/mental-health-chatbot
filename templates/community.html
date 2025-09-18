@@ -1,0 +1,45 @@
+{% extends "base.html" %}
+
+{% block title %}Community Support - Mental Health Support Chatbot{% endblock %}
+
+{% block page_title %}Community Support{% endblock %}
+
+{% block content %}
+<div class="container-fluid mt-4">
+    <p class="lead">Connect with others who are on similar mental health journeys.</p>
+    
+    <div class="mb-4">
+        <a href="{{ url_for('create_room') }}" class="btn btn-primary">Create New Room</a>
+    </div>
+    
+    <div class="room-list">
+        {% for room in rooms %}
+        <div class="room-card">
+            <div class="room-card-body">
+                <h5 class="card-title">{{ room.name }}</h5>
+                <p class="card-text">{{ room.description }}</p>
+                <p class="card-text"><small class="text-muted">{{ room.member_count }} member{% if room.member_count != 1 %}s{% endif %}</small></p>
+                
+                {% if room.is_joined %}
+                <div class="room-actions">
+                    <a href="{{ url_for('chat_room', room_id=room._id) }}" class="btn btn-primary">Enter Chat</a>
+                    <a href="{{ url_for('leave_room', room_id=room._id) }}" class="btn btn-outline-danger">Leave Room</a>
+                </div>
+                {% else %}
+                <a href="{{ url_for('join_room', room_id=room._id) }}" class="btn btn-success">Join Room</a>
+                {% endif %}
+            </div>
+            <div class="room-card-footer">
+                Created {{ room.created_at.strftime('%Y-%m-%d') }}
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    
+    {% if not rooms %}
+    <div class="alert alert-info">
+        No chat rooms are available. Be the first to create one!
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

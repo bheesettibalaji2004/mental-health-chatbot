@@ -1,0 +1,92 @@
+{% extends "base.html" %}
+
+{% block title %}{{ room.name }} - Mental Health Support Chatbot{% endblock %}
+
+{% block page_title %}{{ room.name }}{% endblock %}
+
+{% block content %}
+<div class="container-fluid mt-4">
+    <div class="room-description">
+        <p class="mb-3">{{ room.description }}</p>
+    </div>
+    
+    {% if is_member %}
+    <div class="card">
+        <div class="card-body chat-container" style="height: 400px; overflow-y: auto;">
+            <div id="chat-messages">
+                {% for message in messages %}
+                <div class="message-container mb-3 {% if message.user_id == current_user.id %}text-right{% endif %}">
+                    <div class="message {% if message.user_id == current_user.id %}user-message{% else %}other-message{% endif %}">
+                        <p class="mb-0">{{ message.content }}</p>
+                    </div>
+                    <div class="clearfix"></div>
+                    <small class="message-info">
+                        {{ message.username }} - {{ message.timestamp.strftime('%I:%M %p') }}
+                    </small>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        
+        <div class="card-footer">
+            <form action="{{ url_for('send_message') }}" method="POST">
+                <div class="message-input-group">
+                    <input type="text" class="form-control" name="message" placeholder="Type your message..." required>
+                    <input type="hidden" name="room_id" value="{{ room._id }}">
+                    <button class="btn btn-primary" type="submit">
+                        <i class="fas fa-paper-plane"></i> Send
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+    
+    <div class="room-sidebar mt-3">
+        <h5>Room Members ({{ members|length }})</h5>
+        <ul class="list-group">
+            {% for member in members %}
+            <li class="list-group-item">
+                {{ member.name }}
+                {% if member.id == current_user.id %}
+                <span class="badge badge-primary">You</span>
+                {% endif %}
+            </li>
+            {% endfor %}
+        </ul>
+        <div class="mt-3">
+            <a href="{{ url_for('leave_room', room_id=room._id) }}" class="btn btn-outline-danger">
+                <i class="fas fa-sign-out-alt"></i> Leave Room
+            </a>
+        </div>
+    </div>
+    {% else %}
+    <div class="alert alert-info">
+        You are not a member of this room. Please join to participate in the conversation.
+    </div>
+    <div class="mt-3">
+        <a href="{{ url_for('join_room', room_id=room._id) }}" class="btn btn-success">
+            <i class="fas fa-sign-in-alt"></i> Join Room
+        </a>
+    </div>
+    {% endif %}
+    
+    <div class="mt-3">
+        <a href="{{ url_for('community') }}" class="btn btn-outline-secondary">
+            <i class="fas fa-arrow-left"></i> Back to Community
+        </a>
+    </div>
+</div>
+
+<script>
+    // Auto-scroll to bottom of chat on page load
+    document.addEventListener('DOMContentLoaded', function() {
+        var chatContainer = document.querySelector('.chat-container');
+        if (chatContainer) {
+            chatContainer.scrollTop = chatContainer.scrollHeight;
+        }
+    });
+    
+    // For a more interactive experience, you could implement periodic refresh
+    // with AJAX or WebSockets for real-time chat
+</script>
+{% endblock %}
